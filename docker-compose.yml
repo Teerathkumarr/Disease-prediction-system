@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: medisense_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://medisense:medisense123@db:5432/medisense_db
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=medisense_super_secret_key_change_in_production
+      - MODEL_WEIGHTS_DIR=/app/weights
+    volumes:
+      - ./backend:/app
+      - model_weights:/app/weights
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    networks:
+      - medisense_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: medisense_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - medisense_net
+
+  db:
+    image: postgres:15-alpine
+    container_name: medisense_db
+    environment:
+      POSTGRES_DB: medisense_db
+      POSTGRES_USER: medisense
+      POSTGRES_PASSWORD: medisense123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - medisense_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: medisense_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - medisense_net
+
+volumes:
+  postgres_data:
+  redis_data:
+  model_weights:
+
+networks:
+  medisense_net:
+    driver: bridge

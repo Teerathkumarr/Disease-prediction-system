@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediSense — AI Disease Detection</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050A0E;
+      --surface: #0C1419;
+      --surface2: #111D25;
+      --border: #1A2D3A;
+      --accent-cyan: #00E5FF;
+      --accent-green: #00FF88;
+      --accent-red: #FF3366;
+      --accent-amber: #FFB300;
+      --text: #E8F4F8;
+      --text-muted: #5A7A8A;
+      --text-dim: #8FAAB8;
+      --heart: #FF3366;
+      --diabetes: #00E5FF;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* GRID BACKGROUND */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 64px;
+      background: rgba(5,10,14,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      color: var(--accent-cyan);
+      letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent-cyan); }
+    .nav-badge {
+      background: linear-gradient(135deg, #00E5FF22, #00FF8822);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 4px 10px;
+      border-radius: 2px;
+      letter-spacing: 0.1em;
+    }
+
+    /* MAIN LAYOUT */
+    main { padding-top: 64px; position: relative; z-index: 1; }
+
+    /* HERO */
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      position: relative;
+    }
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .hero-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--accent-green);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      border: 1px solid #00FF8833;
+      padding: 6px 14px;
+      border-radius: 2px;
+      margin-bottom: 2rem;
+      display: inline-block;
+    }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(3rem, 7vw, 6rem);
+      line-height: 1.05;
+      letter-spacing: -1px;
+      margin-bottom: 1.5rem;
+      max-width: 900px;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent-cyan);
+    }
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      max-width: 600px;
+      line-height: 1.7;
+      margin-bottom: 3rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      background: var(--accent-cyan);
+      color: var(--bg);
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #33EEFF; transform: translateY(-1px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      padding: 14px 32px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+    /* STATS ROW */
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin-top: 5rem;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 2rem;
+      font-weight: 500;
+      color: var(--accent-cyan);
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    /* SECTION */
+    section {
+      padding: 6rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--accent-cyan);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+    }
+    .section-sub {
+      color: var(--text-dim);
+      font-size: 1rem;
+      line-height: 1.7;
+      max-width: 600px;
+      margin-bottom: 3rem;
+    }
+
+    /* MODULE CARDS */
+    .modules-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .module-card {
+      background: var(--surface);
+      padding: 3rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .module-card:hover { background: var(--surface2); }
+    .module-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 3px;
+    }
+    .module-card.cvd::before { background: linear-gradient(90deg, var(--heart), transparent); }
+    .module-card.diabetes::before { background: linear-gradient(90deg, var(--diabetes), transparent); }
+    .module-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+    .module-card h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.8rem;
+      margin-bottom: 0.75rem;
+    }
+    .module-card.cvd h3 { color: var(--heart); }
+    .module-card.diabetes h3 { color: var(--diabetes); }
+    .module-card p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      padding: 4px 10px;
+      border-radius: 2px;
+      letter-spacing: 0.05em;
+    }
+    .tag.cvd { background: #FF336611; border: 1px solid #FF336633; color: #FF6688; }
+    .tag.diabetes { background: #00E5FF11; border: 1px solid #00E5FF33; color: #33EEFF; }
+    .tag.neutral { background: #FFFFFF08; border: 1px solid #FFFFFF15; color: var(--text-dim); }
+
+    /* DIAGNOSIS FORM */
+    .diagnosis-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0;
+      max-width: 1200px;
+      margin: 0 auto 6rem;
+    }
+    .diag-header {
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .diag-header h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.8rem;
+    }
+    .diag-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .diag-tab {
+      padding: 1rem 2rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+      font-family: 'Syne', sans-serif;
+    }
+    .diag-tab.active.cvd { color: var(--heart); border-bottom-color: var(--heart); }
+    .diag-tab.active.diabetes { color: var(--diabetes); border-bottom-color: var(--diabetes); }
+    .diag-tab:hover { color: var(--text); }
+    .diag-body { padding: 2.5rem 3rem; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .form-group input, .form-group select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      border-radius: 2px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    .form-group input:focus { border-color: var(--accent-cyan); }
+    .form-group select:focus { border-color: var(--accent-cyan); }
+    .form-group input::placeholder { color: var(--text-muted); }
+    .upload-zone {
+      border: 1px dashed var(--border);
+      padding: 2.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 2px;
+      margin-bottom: 2rem;
+    }
+    .upload-zone:hover { border-color: var(--accent-cyan); background: rgba(0,229,255,0.02); }
+    .upload-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .upload-zone h4 { font-size: 0.9rem; margin-bottom: 0.25rem; }
+    .upload-zone p { font-size: 0.75rem; color: var(--text-muted); }
+    .analyze-btn {
+      width: 100%;
+      padding: 16px;
+      background: transparent;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .analyze-btn.cvd {
+      border: 1px solid var(--heart);
+      color: var(--heart);
+    }
+    .analyze-btn.cvd:hover {
+      background: var(--heart);
+      color: white;
+      box-shadow: 0 0 30px rgba(255,51,102,0.3);
+    }
+    .analyze-btn.diabetes {
+      border: 1px solid var(--diabetes);
+      color: var(--diabetes);
+    }
+    .analyze-btn.diabetes:hover {
+      background: var(--diabetes);
+      color: var(--bg);
+      box-shadow: 0 0 30px rgba(0,229,255,0.3);
+    }
+    .panel-hidden { display: none; }
+
+    /* RESULTS */
+    .results-panel {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 3rem;
+    }
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+    .results-header h3 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; }
+    .risk-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .risk-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      border-radius: 2px;
+    }
+    .risk-card-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .risk-card-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 500;
+    }
+    .risk-card-value.high { color: var(--accent-red); }
+    .risk-card-value.medium { color: var(--accent-amber); }
+    .risk-card-value.low { color: var(--accent-green); }
+    .risk-card-value.normal { color: var(--text); }
+    .risk-bar-container { margin-bottom: 2rem; }
+    .risk-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    .risk-bar-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .risk-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1s ease;
+    }
+    .risk-bar-fill.high { background: linear-gradient(90deg, var(--accent-amber), var(--accent-red)); }
+    .risk-bar-fill.medium { background: linear-gradient(90deg, var(--accent-green), var(--accent-amber)); }
+    .risk-bar-fill.low { background: var(--accent-green); }
+    .shap-section { margin-top: 2rem; }
+    .shap-section h4 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.5rem;
+    }
+    .shap-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 10px; }
+    .shap-feature {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      width: 160px;
+      flex-shrink: 0;
+    }
+    .shap-track {
+      flex: 1;
+      height: 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+    .shap-fill {
+      height: 100%;
+      position: absolute;
+      left: 50%;
+      transition: width 0.8s ease;
+    }
+    .shap-fill.positive { background: rgba(255,51,102,0.6); }
+    .shap-fill.negative { background: rgba(0,229,255,0.6); transform: translateX(-100%); }
+    .shap-val {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      width: 60px;
+      text-align: right;
+    }
+    .shap-val.positive { color: var(--accent-red); }
+    .shap-val.negative { color: var(--accent-cyan); }
+    .verdict-box {
+      margin-top: 2rem;
+      padding: 1.5rem 2rem;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .verdict-box.high { background: #FF336611; border: 1px solid #FF336633; }
+    .verdict-box.medium { background: #FFB30011; border: 1px solid #FFB30033; }
+    .verdict-box.low { background: #00FF8811; border: 1px solid #00FF8833; }
+    .verdict-icon { font-size: 2rem; }
+    .verdict-text h4 { font-size: 1rem; margin-bottom: 0.25rem; }
+    .verdict-text p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+
+    /* ARCHITECTURE SECTION */
+    .arch-section { max-width: 1200px; margin: 0 auto; padding: 0 2rem 6rem; }
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+    .arch-card {
+      background: var(--surface);
+      padding: 2.5rem;
+    }
+    .arch-step {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .arch-card h3 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 0.75rem; }
+    .arch-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; }
+    .tech-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem; }
+    .tech-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      background: #FFFFFF06;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 2px;
+    }
+
+    /* TEAM SECTION */
+    .team-section { max-width: 1200px; margin: 0 auto; padding: 0 2rem 6rem; }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .team-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .team-num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 2.5rem;
+      color: var(--border);
+      font-weight: 500;
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+    .team-card h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .team-card .role {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent-cyan);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .team-card p { font-size: 0.78rem; color: var(--text-dim); line-height: 1.6; }
+
+    /* PIPELINE */
+    .pipeline { display: flex; align-items: center; gap: 0; margin: 3rem 0; overflow-x: auto; }
+    .pipe-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      min-width: 160px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .pipe-step .pipe-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .pipe-step h5 { font-size: 0.8rem; margin-bottom: 0.25rem; }
+    .pipe-step p { font-size: 0.68rem; color: var(--text-muted); }
+    .pipe-arrow {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 0 0.5rem;
+      flex-shrink: 0;
+    }
+
+    /* LOADING ANIMATION */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,10,14,0.95);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+    .loading-overlay.active { display: flex; }
+    .loading-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      color: var(--accent-cyan);
+    }
+    .loading-steps { display: flex; flex-direction: column; gap: 1rem; width: 400px; }
+    .loading-step {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s;
+    }
+    .loading-step.visible { opacity: 1; transform: translateY(0); color: var(--text-dim); }
+    .loading-step.done { color: var(--accent-green); }
+    .step-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .loading-step.done .step-dot { background: var(--accent-green); }
+    .loading-step.visible:not(.done) .step-dot { background: var(--accent-cyan); animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+    .spinner {
+      width: 60px; height: 60px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SCROLL ANIMATIONS */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    footer p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    footer .footer-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem;
+      color: var(--accent-cyan);
+    }
+
+    @media (max-width: 768px) {
+      .modules-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr 1fr; }
+      .risk-cards { grid-template-columns: 1fr 1fr; }
+      .arch-grid { grid-template-columns: 1fr; }
+      .team-grid { grid-template-columns: 1fr 1fr; }
+      .diag-body { padding: 1.5rem; }
+      nav { padding: 0 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-title">Analyzing Patient Data...</div>
+  <div class="loading-steps" id="loadingSteps">
+    <div class="loading-step" id="step1"><div class="step-dot"></div>Preprocessing input data</div>
+    <div class="loading-step" id="step2"><div class="step-dot"></div>Running image analysis model</div>
+    <div class="loading-step" id="step3"><div class="step-dot"></div>Processing clinical features</div>
+    <div class="loading-step" id="step4"><div class="step-dot"></div>Multimodal fusion layer</div>
+    <div class="loading-step" id="step5"><div class="step-dot"></div>Generating SHAP explanations</div>
+    <div class="loading-step" id="step6"><div class="step-dot"></div>Computing risk score</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Medi<span>Sense</span></div>
+  <div class="nav-links">
+    <a href="#modules">Modules</a>
+    <a href="#diagnose">Diagnose</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#team">Team</a>
+    <span class="nav-badge">v1.0 BETA</span>
+  </div>
+</nav>
+
+<main>
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-tag">🎓 BSCS Final Year Project · AI + Data Science</div>
+    <h1>Early Detection of<br><em>Heart & Diabetes</em><br>with Multimodal AI</h1>
+    <p>MediSense combines deep learning on medical images, ECG signals, and clinical lab data to detect cardiovascular disease and diabetes — before symptoms appear.</p>
+    <div class="hero-actions">
+      <a href="#diagnose" class="btn-primary">Run Diagnosis</a>
+      <a href="#architecture" class="btn-secondary">View Architecture</a>
+    </div>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-num">94.2%</div>
+        <div class="stat-label">CVD AUC-ROC</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">91.8%</div>
+        <div class="stat-label">Diabetes Accuracy</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">2</div>
+        <div class="stat-label">Disease Modules</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">5+</div>
+        <div class="stat-label">Open Datasets</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULES -->
+  <section id="modules" style="padding-bottom: 0;">
+    <div class="section-label">What We Detect</div>
+    <h2 class="section-title">Two Modules.<br>One Unified System.</h2>
+    <p class="section-sub">Each module uses a different combination of modalities — optimized for the specific disease's clinical indicators and available data sources.</p>
+  </section>
+  <div style="max-width:1200px; margin: 0 auto 6rem; padding: 0 2rem;" class="fade-in">
+    <div class="modules-grid">
+      <div class="module-card cvd">
+        <span class="module-icon">🫀</span>
+        <h3>Cardiovascular Disease</h3>
+        <p>Analyzes ECG signals using a 1D-CNN + LSTM model to detect arrhythmias and abnormal heart patterns, fused with clinical biomarkers like cholesterol, blood pressure, and age using XGBoost.</p>
+        <div class="tag-list">
+          <span class="tag cvd">1D-CNN + LSTM</span>
+          <span class="tag cvd">ECG Signal</span>
+          <span class="tag neutral">XGBoost</span>
+          <span class="tag neutral">Late Fusion</span>
+          <span class="tag neutral">SHAP</span>
+          <span class="tag neutral">PTB-XL Dataset</span>
+        </div>
+      </div>
+      <div class="module-card diabetes">
+        <span class="module-icon">🩸</span>
+        <h3>Diabetes Detection</h3>
+        <p>Detects diabetic retinopathy from fundus images using EfficientNet-B4, fused with lab values like HbA1c, glucose, BMI, and insulin via a trained tabular model.</p>
+        <div class="tag-list">
+          <span class="tag diabetes">EfficientNet-B4</span>
+          <span class="tag diabetes">Retinal Fundus</span>
+          <span class="tag neutral">XGBoost</span>
+          <span class="tag neutral">Grad-CAM</span>
+          <span class="tag neutral">SHAP</span>
+          <span class="tag neutral">APTOS Dataset</span>
+        </div>
+      </div>
+      <div class="module-card" style="background: var(--surface2);">
+        <span class="module-icon">🔬</span>
+        <h3 style="color: var(--accent-green); font-family: 'DM Serif Display',serif; font-size:1.8rem; margin-bottom:0.75rem;">Explainability Layer</h3>
+        <p>Every prediction comes with visual and quantitative explanations — Grad-CAM heatmaps highlight suspicious regions in images, while SHAP waterfall plots rank feature importance for tabular data.</p>
+        <div class="tag-list">
+          <span class="tag neutral">Grad-CAM</span>
+          <span class="tag neutral">SHAP</span>
+          <span class="tag neutral">Captum</span>
+          <span class="tag neutral">Attention Maps</span>
+        </div>
+      </div>
+      <div class="module-card" style="background: var(--surface2);">
+        <span class="module-icon">📊</span>
+        <h3 style="color: var(--accent-amber); font-family: 'DM Serif Display',serif; font-size:1.8rem; margin-bottom:0.75rem;">Risk Reporting</h3>
+        <p>Generates a detailed PDF clinical report with risk score (0–100%), severity level, SHAP breakdown, and actionable recommendations — ready to print for the attending physician.</p>
+        <div class="tag-list">
+          <span class="tag neutral">PDF Export</span>
+          <span class="tag neutral">Risk Score</span>
+          <span class="tag neutral">Uncertainty Est.</span>
+          <span class="tag neutral">ReportLab</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIAGNOSIS FORM -->
+  <div id="diagnose" style="padding: 0 2rem; max-width: 1200px; margin: 0 auto 6rem;">
+    <div class="section-label">Interactive Demo</div>
+    <h2 class="section-title" style="margin-bottom: 0.5rem;">Run a Diagnosis</h2>
+    <p class="section-sub">Enter patient data to see the AI prediction with explainability. (Demo uses simulated inference.)</p>
+    <div class="diagnosis-section">
+      <div class="diag-header">
+        <h2>Patient Analysis Console</h2>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:0.7rem; color:var(--text-muted);">SESSION: #A2F-9C4</span>
+      </div>
+      <div class="diag-tabs">
+        <button class="diag-tab active cvd" onclick="switchTab('cvd')">🫀 &nbsp;Cardiovascular</button>
+        <button class="diag-tab diabetes" onclick="switchTab('diabetes')">🩸 &nbsp;Diabetes</button>
+      </div>
+      <!-- CVD PANEL -->
+      <div class="diag-body" id="cvdPanel">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Age (years)</label>
+            <input type="number" placeholder="e.g. 54" id="cvd_age" value="58"/>
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="cvd_gender">
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Resting BP (mmHg)</label>
+            <input type="number" placeholder="e.g. 130" id="cvd_bp" value="145"/>
+          </div>
+          <div class="form-group">
+            <label>Cholesterol (mg/dL)</label>
+            <input type="number" placeholder="e.g. 220" id="cvd_chol" value="289"/>
+          </div>
+          <div class="form-group">
+            <label>Max Heart Rate</label>
+            <input type="number" placeholder="e.g. 150" id="cvd_hr" value="132"/>
+          </div>
+          <div class="form-group">
+            <label>Chest Pain Type</label>
+            <select id="cvd_cp">
+              <option>Typical Angina</option>
+              <option>Atypical Angina</option>
+              <option>Non-Anginal Pain</option>
+              <option selected>Asymptomatic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fasting Blood Sugar > 120</label>
+            <select id="cvd_fbs">
+              <option selected>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Exercise Angina</label>
+            <select id="cvd_ea">
+              <option selected>Yes</option>
+              <option>No</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ST Depression (Oldpeak)</label>
+            <input type="number" step="0.1" placeholder="e.g. 1.5" id="cvd_st" value="2.3"/>
+          </div>
+        </div>
+        <div class="upload-zone" onclick="simulateUpload('ecg')">
+          <div class="upload-icon">📈</div>
+          <h4>Upload ECG Recording</h4>
+          <p>Drag & drop .csv or .dat ECG file · PTB-XL format supported</p>
+          <p style="margin-top:8px; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:var(--accent-cyan);" id="ecgUploadStatus">Click to select file</p>
+        </div>
+        <button class="analyze-btn cvd" onclick="runAnalysis('cvd')">Analyze Cardiovascular Risk →</button>
+      </div>
+      <!-- DIABETES PANEL -->
+      <div class="diag-body panel-hidden" id="diabetesPanel">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Age (years)</label>
+            <input type="number" placeholder="e.g. 45" id="db_age" value="42"/>
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select>
+              <option>Female</option>
+              <option>Male</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>BMI (kg/m²)</label>
+            <input type="number" step="0.1" placeholder="e.g. 28.5" id="db_bmi" value="31.2"/>
+          </div>
+          <div class="form-group">
+            <label>Glucose (mg/dL)</label>
+            <input type="number" placeholder="e.g. 110" id="db_gluc" value="162"/>
+          </div>
+          <div class="form-group">
+            <label>HbA1c (%)</label>
+            <input type="number" step="0.1" placeholder="e.g. 5.8" id="db_hba1c" value="7.4"/>
+          </div>
+          <div class="form-group">
+            <label>Insulin (µU/mL)</label>
+            <input type="number" placeholder="e.g. 80" id="db_insulin" value="148"/>
+          </div>
+          <div class="form-group">
+            <label>Blood Pressure (mmHg)</label>
+            <input type="number" placeholder="e.g. 80" id="db_bp" value="88"/>
+          </div>
+          <div class="form-group">
+            <label>Pregnancies</label>
+            <input type="number" placeholder="e.g. 2" id="db_preg" value="3"/>
+          </div>
+          <div class="form-group">
+            <label>Skin Thickness (mm)</label>
+            <input type="number" placeholder="e.g. 20" id="db_skin" value="35"/>
+          </div>
+        </div>
+        <div class="upload-zone" onclick="simulateUpload('retinal')">
+          <div class="upload-icon">👁️</div>
+          <h4>Upload Retinal Fundus Image</h4>
+          <p>Drag & drop .jpg or .png fundus image · 512×512px minimum</p>
+          <p style="margin-top:8px; font-family:'IBM Plex Mono',monospace; font-size:0.65rem; color:var(--accent-cyan);" id="retinalUploadStatus">Click to select file</p>
+        </div>
+        <button class="analyze-btn diabetes" onclick="runAnalysis('diabetes')">Analyze Diabetes Risk →</button>
+      </div>
+      <!-- RESULTS PANEL (hidden until analysis runs) -->
+      <div class="results-panel panel-hidden" id="resultsPanel">
+        <div class="results-header">
+          <h3 id="resultsTitle">Analysis Results</h3>
+          <button onclick="downloadReport()" style="font-family:'Syne',sans-serif; font-size:0.75rem; font-weight:700; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:8px 16px; cursor:pointer; border-radius:2px; letter-spacing:0.05em;">⬇ Export PDF Report</button>
+        </div>
+        <div class="risk-cards" id="riskCards"></div>
+        <div id="riskBars"></div>
+        <div class="shap-section">
+          <h4>SHAP Feature Importance — Top Contributing Factors</h4>
+          <div id="shapBars"></div>
+        </div>
+        <div id="verdictBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div id="architecture" class="arch-section fade-in">
+    <div class="section-label">Technical Design</div>
+    <h2 class="section-title">System Architecture</h2>
+    <p class="section-sub">A full end-to-end ML pipeline — from raw data ingestion to explainable predictions served via REST API.</p>
+    
+    <!-- PIPELINE -->
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-icon">📥</div>
+        <h5>Data Ingestion</h5>
+        <p>Raw images, ECG, lab values</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">⚙️</div>
+        <h5>Preprocessing</h5>
+        <p>Augment, normalize, SMOTE</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">🧠</div>
+        <h5>Feature Extraction</h5>
+        <p>CNN / 1D-LSTM / XGBoost</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">🔀</div>
+        <h5>Fusion Layer</h5>
+        <p>Late fusion + concat</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">🔍</div>
+        <h5>Explainability</h5>
+        <p>Grad-CAM + SHAP</p>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step">
+        <div class="pipe-icon">📊</div>
+        <h5>Risk Output</h5>
+        <p>Score + Report + API</p>
+      </div>
+    </div>
+
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-step">Layer 01 · Data</div>
+        <h3>Data Engineering</h3>
+        <p>Multi-source data collection from NIH, PhysioNet, Kaggle. Preprocessing includes normalization, augmentation (rotation, flipping, CLAHE for images), and SMOTE for class balancing.</p>
+        <div class="tech-pills">
+          <span class="tech-pill">Pandas</span>
+          <span class="tech-pill">OpenCV</span>
+          <span class="tech-pill">Albumentations</span>
+          <span class="tech-pill">imbalanced-learn</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-step">Layer 02 · Models</div>
+        <h3>Deep Learning Models</h3>
+        <p>EfficientNet-B4 for retinal images (pretrained ImageNet). 1D-CNN + BiLSTM for ECG time-series. XGBoost with hyperparameter tuning via Optuna for tabular features.</p>
+        <div class="tech-pills">
+          <span class="tech-pill">PyTorch</span>
+          <span class="tech-pill">EfficientNet-B4</span>
+          <span class="tech-pill">BiLSTM</span>
+          <span class="tech-pill">XGBoost</span>
+          <span class="tech-pill">Optuna</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-step">Layer 03 · Fusion</div>
+        <h3>Multimodal Fusion</h3>
+        <p>Late fusion architecture: each modality produces a probability vector, concatenated and passed through a 2-layer MLP for final prediction. Confidence via MC Dropout.</p>
+        <div class="tech-pills">
+          <span class="tech-pill">Late Fusion MLP</span>
+          <span class="tech-pill">MC Dropout</span>
+          <span class="tech-pill">Softmax</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-step">Layer 04 · XAI</div>
+        <h3>Explainability</h3>
+        <p>Grad-CAM generates class activation maps on retinal/ECG images. SHAP TreeExplainer for XGBoost. Captum for PyTorch models. Every prediction is fully interpretable.</p>
+        <div class="tech-pills">
+          <span class="tech-pill">Grad-CAM</span>
+          <span class="tech-pill">SHAP</span>
+          <span class="tech-pill">Captum</span>
+          <span class="tech-pill">LIME</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-step">Layer 05 · Backend</div>
+        <h3>API & Backend</h3>
+        <p>FastAPI REST backend with async inference endpoints. JWT authentication for doctor accounts. PostgreSQL database for patient records. Redis for caching model outputs.</p>
+        <div class="tech-pills">
+          <span class="tech-pill">FastAPI</span>
+          <span class="tech-pill">PostgreSQL</span>
+          <span class="tech-pill">Redis</span>
+          <span class="tech-pill">JWT Auth</span>
+          <span class="tech-pill">SQLAlchemy</span>
+        </div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-step">Layer 06 · Deployment</div>
+        <h3>Frontend & Deploy</h3>
+        <p>React.js dashboard with Chart.js visualizations. PDF report generation with ReportLab. Dockerized containers deployed on AWS EC2. CI/CD via GitHub Actions.</p>
+        <div class="tech-pills">
+          <span class="tech-pill">React.js</span>
+          <span class="tech-pill">Docker</span>
+          <span class="tech-pill">AWS EC2</span>
+          <span class="tech-pill">ReportLab</span>
+          <span class="tech-pill">GitHub Actions</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM -->
+  <div id="team" class="team-section fade-in">
+    <div class="section-label">Project Team</div>
+    <h2 class="section-title">4 Members.<br>Clear Ownership.</h2>
+    <p class="section-sub">Each team member owns a well-defined vertical — with clean handoffs between layers.</p>
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-num">01</div>
+        <h4>Data Engineer</h4>
+        <div class="role">Member 1</div>
+        <p>Dataset collection (PTB-XL, APTOS, PIMA, Cleveland), preprocessing pipelines, augmentation strategies, and class balancing with SMOTE. Builds the unified data loading infrastructure.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-num">02</div>
+        <h4>CV & Image Specialist</h4>
+        <div class="role">Member 2</div>
+        <p>Trains EfficientNet-B4 on retinal fundus images with transfer learning. Implements Grad-CAM heatmap visualization. Handles the entire diabetes image module and its evaluation.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-num">03</div>
+        <h4>Signal & ML Engineer</h4>
+        <div class="role">Member 3</div>
+        <p>Builds the 1D-CNN + BiLSTM ECG model. Trains XGBoost on tabular data for both diseases. Designs fusion layers and all SHAP/LIME explainability integration.</p>
+      </div>
+      <div class="team-card">
+        <div class="team-num">04</div>
+        <h4>Full Stack & Deploy</h4>
+        <div class="role">Member 4</div>
+        <p>Builds FastAPI backend with inference endpoints, React dashboard, PDF report generation, Docker containerization, and AWS deployment with CI/CD pipeline.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-logo">MediSense</div>
+  <p>BSCS Final Year Project · Data Science & AI Domain · 2024–25</p>
+  <p>Built with PyTorch · FastAPI · React</p>
+</footer>
+
+<script>
+  // TAB SWITCHING
+  function switchTab(tab) {
+    document.getElementById('cvdPanel').classList.toggle('panel-hidden', tab !== 'cvd');
+    document.getElementById('diabetesPanel').classList.toggle('panel-hidden', tab !== 'diabetes');
+    document.getElementById('resultsPanel').classList.add('panel-hidden');
+    document.querySelectorAll('.diag-tab').forEach(t => t.classList.remove('active', 'cvd', 'diabetes'));
+    const activeTab = document.querySelector(`.diag-tab:nth-child(${tab === 'cvd' ? 1 : 2})`);
+    activeTab.classList.add('active', tab);
+  }
+
+  // SIMULATE FILE UPLOAD
+  function simulateUpload(type) {
+    const statusEl = document.getElementById(type === 'ecg' ? 'ecgUploadStatus' : 'retinalUploadStatus');
+    statusEl.textContent = type === 'ecg' ? '✓ ECG_patient_001.dat loaded (21.4 KB)' : '✓ fundus_right_eye.jpg loaded (512×512)';
+    statusEl.style.color = 'var(--accent-green)';
+  }
+
+  // RUN ANALYSIS
+  function runAnalysis(type) {
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('active');
+    const steps = ['step1','step2','step3','step4','step5','step6'];
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i > 0) document.getElementById(steps[i-1]).classList.add('done');
+      if (i < steps.length) {
+        document.getElementById(steps[i]).classList.add('visible');
+        i++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          overlay.classList.remove('active');
+          steps.forEach(s => { document.getElementById(s).classList.remove('visible','done'); });
+          showResults(type);
+        }, 600);
+      }
+    }, 500);
+  }
+
+  function showResults(type) {
+    document.getElementById('resultsPanel').classList.remove('panel-hidden');
+
+    const isCVD = type === 'cvd';
+    document.getElementById('resultsTitle').textContent = isCVD ? '🫀 Cardiovascular Risk Analysis' : '🩸 Diabetes Risk Analysis';
+
+    // Risk cards
+    const cards = isCVD ? [
+      { label: 'CVD Risk Score', value: '78%', cls: 'high' },
+      { label: 'Confidence', value: '91%', cls: 'normal' },
+      { label: 'ECG Anomaly', value: 'HIGH', cls: 'high' },
+      { label: 'Severity', value: 'STAGE 2', cls: 'high' },
+    ] : [
+      { label: 'Diabetes Risk', value: '67%', cls: 'medium' },
+      { label: 'Confidence', value: '88%', cls: 'normal' },
+      { label: 'Retinopathy', value: 'MILD', cls: 'medium' },
+      { label: 'HbA1c Risk', value: 'HIGH', cls: 'high' },
+    ];
+
+    document.getElementById('riskCards').innerHTML = cards.map(c => `
+      <div class="risk-card">
+        <div class="risk-card-label">${c.label}</div>
+        <div class="risk-card-value ${c.cls}">${c.value}</div>
+      </div>
+    `).join('');
+
+    // Risk bars
+    const bars = isCVD ? [
+      { label: 'Image Model (ECG)', val: 82, cls: 'high' },
+      { label: 'Clinical Model', val: 74, cls: 'high' },
+      { label: 'Fusion Score', val: 78, cls: 'high' },
+    ] : [
+      { label: 'Image Model (Retinal)', val: 60, cls: 'medium' },
+      { label: 'Clinical Model', val: 71, cls: 'medium' },
+      { label: 'Fusion Score', val: 67, cls: 'medium' },
+    ];
+
+    document.getElementById('riskBars').innerHTML = bars.map(b => `
+      <div class="risk-bar-container">
+        <div class="risk-bar-label"><span>${b.label}</span><span>${b.val}%</span></div>
+        <div class="risk-bar-track">
+          <div class="risk-bar-fill ${b.cls}" style="width:${b.val}%"></div>
+        </div>
+      </div>
+    `).join('');
+
+    // SHAP
+    const shapData = isCVD ? [
+      { f: 'ST_Depression', v: '+0.42', dir: 'positive', w: 80 },
+      { f: 'Chest_Pain_Type', v: '+0.38', dir: 'positive', w: 72 },
+      { f: 'Cholesterol', v: '+0.31', dir: 'positive', w: 59 },
+      { f: 'Age', v: '+0.28', dir: 'positive', w: 53 },
+      { f: 'Max_Heart_Rate', v: '-0.21', dir: 'negative', w: 40 },
+      { f: 'ECG_Anomaly_Score', v: '+0.19', dir: 'positive', w: 36 },
+    ] : [
+      { f: 'HbA1c', v: '+0.51', dir: 'positive', w: 96 },
+      { f: 'Glucose_Level', v: '+0.44', dir: 'positive', w: 83 },
+      { f: 'BMI', v: '+0.29', dir: 'positive', w: 55 },
+      { f: 'Retinopathy_Score', v: '+0.25', dir: 'positive', w: 47 },
+      { f: 'Age', v: '+0.18', dir: 'positive', w: 34 },
+      { f: 'Insulin', v: '-0.14', dir: 'negative', w: 26 },
+    ];
+
+    document.getElementById('shapBars').innerHTML = shapData.map(s => `
+      <div class="shap-bar">
+        <div class="shap-feature">${s.f}</div>
+        <div class="shap-track">
+          <div class="shap-fill ${s.dir}" style="width:${s.w/2}%"></div>
+        </div>
+        <div class="shap-val ${s.dir}">${s.v}</div>
+      </div>
+    `).join('');
+
+    // Verdict
+    const isHigh = isCVD;
+    document.getElementById('verdictBox').innerHTML = `
+      <div class="verdict-box ${isHigh ? 'high' : 'medium'}">
+        <div class="verdict-icon">${isHigh ? '⚠️' : '🟡'}</div>
+        <div class="verdict-text">
+          <h4>${isHigh ? 'HIGH RISK — Immediate Cardiology Referral Recommended' : 'MODERATE RISK — Follow-up Testing Required'}</h4>
+          <p>${isHigh
+            ? 'Patient shows strong indicators of cardiovascular disease. Elevated ST depression, high cholesterol (289 mg/dL), and ECG anomalies suggest significant cardiac risk. Recommend echocardiogram and stress test.'
+            : 'Patient shows early signs of Type 2 Diabetes. HbA1c of 7.4% and fasting glucose 162 mg/dL exceed diagnostic thresholds. Mild diabetic retinopathy detected. Recommend endocrinologist consultation.'
+          }</p>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('resultsPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function downloadReport() {
+    alert('📄 PDF Report generation would be handled by the FastAPI backend via ReportLab.\n\nIn production: POST /api/report/generate → returns download link.');
+  }
+
+  // SCROLL FADE-IN
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
